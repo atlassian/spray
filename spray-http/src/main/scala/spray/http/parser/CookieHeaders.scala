@@ -30,7 +30,7 @@ private[parser] trait CookieHeaders {
   }
 
   def `*Cookie` = rule {
-    oneOrMore(CookiePair, separator = ";") ~ EOI ~~> (HttpHeaders.`Cookie`(_))
+    oneOrMoreSkipping(CookiePair, PermissiveCookiePair, separator = ";") ~ EOI ~~> (HttpHeaders.`Cookie`(_))
   }
 
   def CookiePair = rule {
@@ -61,4 +61,14 @@ private[parser] trait CookieHeaders {
   def DomainNamePart = rule { AlphaNum ~ zeroOrMore(AlphaNum | ch('-')) }
 
   def StringValue = rule { oneOrMore(!(CTL | ch(';')) ~ Char) ~> identityFunc }
+
+  def oneOrMoreSkipping[A](sub: Rule1[A], skip: Rule0, separator: Rule0): Rule1[Seq[A]] = rule {
+    oneOrMore((sub ~~> (Some(_))) | skip ~> (_ ⇒ None), separator = separator) ~~> (_.flatten)
+  }
+
+  def PermissiveCookiePair: Rule0 = rule { oneOrMore(PermissiveCookiePairChar) ~ OptWS }
+
+  def PermissiveCookiePairChar: Rule0 = rule { !CTL ~ !PermissiveCookieInvalidChar ~ ANY }
+
+  def PermissiveCookieInvalidChar: Rule0 = rule { anyOf(",; \t") }
 }
