@@ -16,8 +16,12 @@
 
 package spray.http
 
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
+import org.scalacheck.Prop
 import org.specs2.mutable.Specification
 import org.specs2.matcher.MatchResult
+import org.specs2.ScalaCheck
 import parser.HttpParser
 import CacheDirectives._
 import HttpHeaders._
@@ -28,7 +32,7 @@ import HttpEncodings._
 import HttpMethods._
 import spray.util._
 
-class HttpHeaderSpec extends Specification {
+class HttpHeaderSpec extends Specification with ScalaCheck {
   val `application/vnd.spray` = MediaTypes.register(MediaType.custom("application/vnd.spray"))
 
   "The HTTP header model must correctly parse and render the following headers" >> {
@@ -212,6 +216,47 @@ class HttpHeaderSpec extends Specification {
         httpOnly = true,
         extension = Some("fancyPants"),
         secure = true)).toString === "Cookie: SID=31d4d96e407aad42"
+
+      implicit val arbCookie: Arbitrary[HttpCookie] = Arbitrary {
+        for {
+          name ← Gen.alphaStr.suchThat(!_.isEmpty)
+          content ← Gen.alphaStr
+        } yield HttpCookie(name, content)
+      }
+
+      case class LiberallyNamedCookie(name: String, content: String)
+      implicit val arbLiberallyNamedCookie: Arbitrary[LiberallyNamedCookie] = {
+        // Generate arbitrary ASCII strings excluding control, DEL and a bunch of invalid HTTP chars and invalid
+        // RFC6265 cookie chars, based on http://curl.haxx.se/rfc/cookie_spec.html
+        def token = Arbitrary(Gen.nonEmptyListOf(Gen.choose('\u0020', '\u007E')).map(_.mkString.replaceAll("[;, \t\\\\\"]", "")))
+        Arbitrary(Gen.resultOf[String, String, LiberallyNamedCookie](LiberallyNamedCookie)(token, token))
+      }
+
+      "return the RFC-valid cookies in the presence of liberally-named cookies" in {
+        def getCookieProp = { (validCookies: List[HttpCookie], liberallyNamedCookies: List[LiberallyNamedCookie]) ⇒
+          (validCookies.size + liberallyNamedCookies.size > 0) ==> {
+            def cookieHeaderValue = {
+              val rendering = new spray.http.StringRendering()
+              Cookie(validCookies).renderValue(rendering)
+              (liberallyNamedCookies.map(cookie ⇒ cookie.name + "=" + cookie.content) :+ rendering.get)
+                .filter(s ⇒ s != "=" && s != "").mkString("; ")
+            }
+
+            val result = HttpParser.parse(HttpParser.`*Cookie`, cookieHeaderValue)
+
+            result must beRight((cookieHeader: Cookie) ⇒ cookieHeader.cookies must contain(atLeast(validCookies: _*)))
+          }
+        }
+
+        val exampleHttpCookies: Gen[HttpCookie] = Gen.oneOf(Seq(
+          HttpCookie("a", "b"), HttpCookie("lang", "en-AU"), HttpCookie("SID", "31d4d96e407aad42")))
+        val exampleLiberallyNamedCookies: Gen[LiberallyNamedCookie] = Gen.oneOf(Seq(
+          LiberallyNamedCookie("a", "b"), LiberallyNamedCookie("lang", "en-AU"), LiberallyNamedCookie("SID", "31d4d96e407aad42"),
+          LiberallyNamedCookie("brackets[yay]", "some'thing"), LiberallyNamedCookie("i#love", "symb*ls!@#$%^&*(){}-_+|<>?/")))
+
+        "generated" in prop { getCookieProp }
+        "examples" in Prop.forAll(Gen.listOf(exampleHttpCookies), Gen.listOf(exampleLiberallyNamedCookies)) { getCookieProp }
+      }
     }
 
     "Date" in {
