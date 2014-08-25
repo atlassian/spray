@@ -212,6 +212,10 @@ class HttpHeaderSpec extends Specification {
         httpOnly = true,
         extension = Some("fancyPants"),
         secure = true)).toString === "Cookie: SID=31d4d96e407aad42"
+
+      // Cookie headers with invalid cookies
+      "Cookie: brackets[yay]=some'thing; a=1" =!= Cookie(HttpCookie("a", "1")).renderedTo("a=1")
+      "Cookie: a=1; i#love|symb*ls!@#$%^&*(){}-_+|<>?/=; b=2" =!= Cookie(HttpCookie("a", "1"), HttpCookie("b", "2")).renderedTo("a=1; b=2")
     }
 
     "Date" in {
