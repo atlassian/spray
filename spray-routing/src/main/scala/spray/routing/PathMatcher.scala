@@ -236,7 +236,8 @@ trait ImplicitPathMatcherConstruction {
    * the matcher consumes this path segment (prefix) and extracts the corresponding map value.
    */
   implicit def valueMap2PathMatcher[T](valueMap: Map[String, T]): PathMatcher1[T] =
-    valueMap.map { case (prefix, value) ⇒ stringExtractionPair2PathMatcher(prefix, value) }.reduceLeft(_ | _)
+    if (valueMap.isEmpty) PathMatchers.nothingMatcher
+    else valueMap.map { case (prefix, value) ⇒ stringExtractionPair2PathMatcher(prefix, value) }.reduceLeft(_ | _)
 }
 
 trait PathMatchers {
@@ -359,12 +360,12 @@ trait PathMatchers {
 
     def fromChar(c: Char): T
 
-    def fromDecimalChar(c: Char): T = if ('0' <= c && c <= '9') (c - '0').asInstanceOf[T] else minusOne
+    def fromDecimalChar(c: Char): T = if ('0' <= c && c <= '9') x.fromInt(c - '0') else minusOne
 
     def fromHexChar(c: Char): T =
-      if ('0' <= c && c <= '9') (c - '0').asInstanceOf[T] else {
+      if ('0' <= c && c <= '9') x.fromInt(c - '0') else {
         val cn = c | 0x20 // normalize to lowercase
-        if ('a' <= cn && cn <= 'f') (cn - 'a' + 10).asInstanceOf[T] else
+        if ('a' <= cn && cn <= 'f') x.fromInt(cn - 'a' + 10) else
           minusOne
       }
   }
@@ -414,6 +415,14 @@ trait PathMatchers {
 
   @deprecated("Use `Segment` instead", "1.0-M8/1.1-M8")
   def PathElement = Segment
+
+  /**
+   * A PathMatcher that never matches.
+   */
+  def nothingMatcher[L <: HList]: PathMatcher[L] =
+    new PathMatcher[L] {
+      def apply(p: Path) = Unmatched
+    }
 }
 
 object PathMatchers extends PathMatchers

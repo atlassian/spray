@@ -20,7 +20,7 @@ import akka.event.Logging._
 import shapeless._
 import spray.routing.directives.{ DirectoryListing, LogEntry }
 import spray.httpx.marshalling.Marshaller
-import spray.httpx.TwirlSupport._
+import spray.httpx.PlayTwirlSupport._
 import spray.http._
 import spray.routing._
 import html._
@@ -68,9 +68,14 @@ class SiteServiceActor(settings: SiteSettings) extends HttpServiceActor with Sea
           } ~
           logRequestResponse(showErrorResponses _) {
             talkCharts("jax14") ~
-            talkCharts("scala.io") ~
+            talkCharts("duse") ~
+            talkCharts("msug") ~
+            talkCharts("scala.io/2013") ~
+            talkCharts("scala.io/2014") ~
             talkCharts("scaladays2014") ~
+            talkCharts("scalax/2014") ~
             talkCharts("webinar") ~
+            talkCharts("webinar2014") ~
             talkCharts("wjax") ~
             talkCharts("zse") ~
             searchRoute("spray.io") ~
@@ -78,6 +83,9 @@ class SiteServiceActor(settings: SiteSettings) extends HttpServiceActor with Sea
             getFromResourceDirectory("theme") ~
             pathPrefix("_images") {
               getFromResourceDirectory("sphinx/json/_images")
+            } ~
+            pathPrefix("files") {
+              getFromDirectory("/opt/spray.io/files")
             } ~
             logRequest(showRequest _) {
               pathSingleSlash {
@@ -122,8 +130,8 @@ class SiteServiceActor(settings: SiteSettings) extends HttpServiceActor with Sea
                 } ~
                 requestUri { uri =>
                   val path = uri.path.toString
-                  "(?:-RC[1234])|(?:.0)/".r.findFirstIn(path) match {
-                    case Some(found) => redirect(uri.withPath(Uri.Path(path.replace(found, ".1/"))), MovedPermanently)
+                  "(?:-RC[1234])|(?:.[01])/".r.findFirstIn(path) match {
+                    case Some(found) => redirect(uri.withPath(Uri.Path(path.replace(found, ".2/"))), MovedPermanently)
                     case None => reject
                   }
                 } ~
@@ -176,7 +184,7 @@ class SiteServiceActor(settings: SiteSettings) extends HttpServiceActor with Sea
     }(DirectoryListing.DefaultMarshaller)
 
   def talkCharts(talk: String) =
-    pathPrefix(talk) {
+    pathPrefix(PathMatchers.separateOnSlashes(talk)) {
       pathEnd {
         redirect(s"/$talk/", MovedPermanently)
       } ~

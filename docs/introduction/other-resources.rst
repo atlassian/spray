@@ -1,6 +1,31 @@
 Other Resources
 ===============
 
+Dec 2014: "*Reactive Streams* and *Akka HTTP*" at the `Dutch Scala Enthusiasts`__
+  | Slides: `/duse/`__
+
+__ http://www.meetup.com/Dutch-Scala-Enthusiasts/events/218602810/
+__ /duse/
+
+Dec 2014: "*Akka HTTP*: Connect to the world" talk from `Scala eXchange 2014`__
+  | Video: https://skillsmatter.com/skillscasts/5852-rest-on-akka-connect-to-the-world
+  | Slides: `/scalax/2014/`__
+
+__ http://skillsmatter.com/event/scala/scala-exchange-2014
+__ /scalax/2014/
+
+Oct 2014: "*Akka HTTP*: Connect to the world" talk from `scala.io`__ 2014
+  | Slides: `/scala.io/2014/`__
+
+__ http://scala.io
+__ /scala.io/2014/
+
+Oct 2014: "*Reactive Streams* and *Akka HTTP*" at the `Munich Scala User Group Meetup`__
+  | Slides: `/msug/`__
+
+__ http://www.meetup.com/ScalaMuc/
+__ /msug/
+
 June 2014: "akka-http: (un)REST your actors" talk from `ScalaDays 2014`__
   | Video: http://www.parleys.com/play/53a7d2c3e4b0543940d9e539/chapter0/about
   | Slides: `/scaladays2014/`__
@@ -39,10 +64,10 @@ __ http://jax.de/wjax2013/
 __ /wjax/
 
 Oct 2013: "*spray*: REST on Akka" talk from `scala.io`__ 2013
-  | Slides: `/scala.io/`__
+  | Slides: `/scala.io/2013/`__
 
 __ http://scala.io
-__ /scala.io/
+__ /scala.io/2013/
 
 Jan 2013: "The Scala Types" podcast: "Mathias Doenitz on *spray*"
   | Part 1: http://bit.ly/scalatypes-podcast-on-spray-part-1
