@@ -224,6 +224,9 @@ class HttpHeaderSpec extends Specification {
       // Cookie headers with invalid cookies
       "Cookie: brackets[yay]=some'thing; a=1" =!= Cookie(HttpCookie("a", "1")).renderedTo("a=1")
       "Cookie: a=1; i#love|symb*ls!@#$%^&*(){}-_+|<>?/=; b=2" =!= Cookie(HttpCookie("a", "1"), HttpCookie("b", "2")).renderedTo("a=1; b=2")
+      "Cookie: a=1; commaseparatedvalue=x,y,z; b=2" =!= Cookie(HttpCookie("a", "1"),
+        HttpCookie("commaseparatedvalue", "x"), // ",y,z" is discarded; without reverting #869, this is unavoidable
+        HttpCookie("b", "2")).renderedTo("a=1; commaseparatedvalue=x; b=2")
     }
 
     "Date" in {
